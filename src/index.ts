@@ -54,7 +54,7 @@ const upload = async (pathToFolder: string, bucket: string) => {
             async.asyncify(async (file: string) => {
                 const Key = file.replace(dirPath, "").replace(/\\/g, "/").substr(1);
 
-                console.log(`Uploading: [${Key}]...`);
+                console.log(`Uploading: ${Key}`);
 
                 await s3.upload({ Key, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
             }),
@@ -71,7 +71,7 @@ const upload = async (pathToFolder: string, bucket: string) => {
 
 emptyS3Bucket(inputs.bucket)
     .then(() => {
-        console.log(`Bucket ${console.log("OK")} successfully cleaned.`);
+        console.log(`Bucket ${inputs.bucket} was cleaned successfully`);
 
         upload(inputs.path, inputs.bucket)
             .then(() => console.log("OK"))
