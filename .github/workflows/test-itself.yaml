@@ -1,0 +1,14 @@
+name: "test itself"
+on:
+    push:
+jobs:
+    test:
+        runs-on: ubuntu-16.04
+        steps:
+            - uses: actions/checkout@v2
+            - uses: ./
+              with:
+                  accessKeyId: ${{ secrets.ACCESS_KEY_ID }}
+                  secretAccessKey: ${{ secrets.SECRET_ACCESS_KEY }}
+                  bucket: ${{ secrets.BUCKET }}
+                  path: "../src"

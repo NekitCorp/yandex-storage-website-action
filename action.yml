@@ -1,0 +1,26 @@
+name: "Fancy name of the action"
+description: "Short description"
+author: "name I want to become famous with"
+inputs:
+    accessKeyId:
+        description: "Access key id"
+        default: ""
+        required: true
+    secretAccessKey:
+        description: "Secret access key"
+        default: ""
+        required: true
+    bucket:
+        description: "S3 bucket"
+        default: ""
+        required: true
+    path:
+        description: "Path to upload folder"
+        default: ""
+        required: true
+runs:
+    using: "node12"
+    main: "build/index.js"
+branding:
+    icon: "upload-cloud"
+    color: "blue"
