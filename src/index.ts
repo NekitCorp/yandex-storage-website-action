@@ -33,7 +33,7 @@ const emptyS3Bucket = async (bucket: string) => {
         return;
     }
 
-    const deleteKeys = listedObjects.Contents.map((c) => ({ Key: c.Key as string }));
+    const deleteKeys = listedObjects.Contents.map(c => ({ Key: c.Key as string }));
 
     await s3.deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } }).promise();
 
@@ -47,6 +47,13 @@ const upload = async (pathToFolder: string, bucket: string) => {
     const dirPath = path.resolve(__dirname, pathToFolder);
     const filesToUpload = fs.existsSync(dirPath) ? await readdir(dirPath) : [];
 
+    console.log("__dirname", __dirname);
+    console.log("dirPath", dirPath);
+
+    if (filesToUpload.length) {
+        throw new Error(`Folder ${dirPath} doesn't exists`);
+    }
+
     return new Promise((resolve, reject) => {
         async.eachOfLimit(
             filesToUpload,
@@ -58,7 +65,7 @@ const upload = async (pathToFolder: string, bucket: string) => {
 
                 await s3.upload({ Key, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
             }),
-            (err) => {
+            err => {
                 if (err) {
                     return reject(new Error(err.message));
                 }
@@ -75,6 +82,6 @@ emptyS3Bucket(inputs.bucket)
 
         upload(inputs.path, inputs.bucket)
             .then(() => console.log("OK"))
-            .catch((err) => console.log("Error", err));
+            .catch(err => console.log("Error", err));
     })
-    .catch((err) => console.log("Cleaning error", err));
+    .catch(err => console.log("Cleaning error", err));
