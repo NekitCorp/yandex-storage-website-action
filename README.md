@@ -1,6 +1,6 @@
 # Yandex object storage static website
 
-Deploy static website to Yandex Object Storage
+Deploy [static website to Yandex Object Storage](https://cloud.yandex.ru/docs/storage/operations/hosting/setup)
 
 ## Configuration
 
