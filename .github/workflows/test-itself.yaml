@@ -11,4 +11,4 @@ jobs:
                   accessKeyId: ${{ secrets.ACCESS_KEY_ID }}
                   secretAccessKey: ${{ secrets.SECRET_ACCESS_KEY }}
                   bucket: ${{ secrets.BUCKET }}
-                  path: "../src"
+                  path: "./src"

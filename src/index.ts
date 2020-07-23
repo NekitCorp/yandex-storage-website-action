@@ -1,9 +1,8 @@
+import * as core from "@actions/core";
 import async from "async";
 import AWS from "aws-sdk";
 import fs from "fs";
-import path from "path";
 import readdir from "recursive-readdir";
-import * as core from "@actions/core";
 
 type Inputs = {
     accessKeyId: string;
@@ -43,30 +42,21 @@ const emptyS3Bucket = async (bucket: string) => {
 };
 
 // https://gist.github.com/jlouros/9abc14239b0d9d8947a3345b99c4ebcb#gistcomment-2751992
-const upload = async (pathToFolder: string, bucket: string) => {
-    const dirPath = path.resolve(__dirname, pathToFolder);
-    const filesToUpload = fs.existsSync(dirPath) ? await readdir(dirPath) : [];
-
-    console.log("pathToFolder", fs.existsSync(pathToFolder));
-    const test = await readdir(pathToFolder);
-    console.log("pathToFolder ls", test);
-    console.log("__dirname", __dirname);
-    console.log("dirPath", dirPath);
-
-    if (filesToUpload.length === 0) {
-        throw new Error(`Folder ${dirPath} doesn't exists`);
+const upload = async (path: string, bucket: string) => {
+    if (!fs.existsSync(path)) {
+        throw new Error(`Folder ${path} doesn't exists`);
     }
+
+    const filesToUpload = await readdir(path);
 
     return new Promise((resolve, reject) => {
         async.eachOfLimit(
             filesToUpload,
             10,
             async.asyncify(async (file: string) => {
-                const Key = file.replace(dirPath, "").replace(/\\/g, "/").substr(1);
+                console.log(`Uploading: ${file}`);
 
-                console.log(`Uploading: ${Key}`);
-
-                await s3.upload({ Key, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
+                await s3.upload({ Key: file, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
             }),
             err => {
                 if (err) {
