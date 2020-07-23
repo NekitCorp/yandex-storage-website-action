@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import async from "async";
 import AWS from "aws-sdk";
 import fs from "fs";
+import mime from "mime-types";
 import readdir from "recursive-readdir";
 
 type Inputs = {
@@ -57,9 +58,9 @@ const upload = async (path: string, bucket: string) => {
                 // remove folder name
                 const key = file.split("/").slice(1).join("/");
 
-                console.log(`Uploading: ${key}`);
+                console.log(`Uploading: ${key} ${mime.lookup(file)}`);
 
-                await s3.upload({ Key: key, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
+                await s3.upload({ Key: key, Bucket: bucket, Body: fs.readFileSync(file), ContentType: mime.lookup(file) as string }).promise();
             }),
             err => {
                 if (err) {

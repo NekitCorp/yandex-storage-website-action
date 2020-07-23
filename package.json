@@ -13,11 +13,13 @@
         "@actions/core": "^1.2.4",
         "async": "^3.2.0",
         "aws-sdk": "^2.717.0",
+        "mime-types": "^2.1.27",
         "recursive-readdir": "^2.2.2",
         "typescript": "^3.9.7"
     },
     "devDependencies": {
         "@types/async": "^3.2.3",
+        "@types/mime-types": "^2.1.0",
         "@types/node": "^14.0.24",
         "@types/recursive-readdir": "^2.2.0",
         "@zeit/ncc": "^0.22.3"
