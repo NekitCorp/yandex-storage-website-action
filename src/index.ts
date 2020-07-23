@@ -54,9 +54,12 @@ const upload = async (path: string, bucket: string) => {
             filesToUpload,
             10,
             async.asyncify(async (file: string) => {
-                console.log(`Uploading: ${file}`);
+                // remove folder name
+                const key = file.split("/").slice(1).join("/");
 
-                await s3.upload({ Key: file, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
+                console.log(`Uploading: ${key}`);
+
+                await s3.upload({ Key: key, Bucket: bucket, Body: fs.readFileSync(file) }).promise();
             }),
             err => {
                 if (err) {
