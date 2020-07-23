@@ -47,8 +47,8 @@ const upload = async (pathToFolder: string, bucket: string) => {
     const dirPath = path.resolve(__dirname, pathToFolder);
     const filesToUpload = fs.existsSync(dirPath) ? await readdir(dirPath) : [];
 
-    console.log("pathToFolder", fs.existsSync("pathToFolder"));
-    const test = await readdir("pathToFolder");
+    console.log("pathToFolder", fs.existsSync(pathToFolder));
+    const test = await readdir(pathToFolder);
     console.log("pathToFolder ls", test);
     console.log("__dirname", __dirname);
     console.log("dirPath", dirPath);
