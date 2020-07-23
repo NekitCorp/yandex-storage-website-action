@@ -50,7 +50,7 @@ const upload = async (pathToFolder: string, bucket: string) => {
     console.log("__dirname", __dirname);
     console.log("dirPath", dirPath);
 
-    if (filesToUpload.length) {
+    if (filesToUpload.length === 0) {
         throw new Error(`Folder ${dirPath} doesn't exists`);
     }
 
