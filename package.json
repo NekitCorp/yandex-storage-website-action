@@ -1,8 +1,8 @@
 {
-    "name": "github-action",
+    "name": "yandex-serverless-action",
     "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "description": "Github action for deploy static website to Yandex Object Storage",
+    "main": "dist/index.js",
     "scripts": {
         "build": "ncc build src/index.ts -o dist"
     },

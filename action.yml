@@ -1,23 +1,27 @@
-name: "Fancy name of the action"
-description: "Short description"
-author: "name I want to become famous with"
+name: "Yandex object storage static website"
+description: "Deploy static website to Yandex Object Storage"
+author: "Nikita"
 inputs:
     accessKeyId:
-        description: "Access key id"
+        description: "Service account access key id"
         default: ""
         required: true
     secretAccessKey:
-        description: "Secret access key"
+        description: "Service account secret access key"
         default: ""
         required: true
     bucket:
-        description: "S3 bucket"
+        description: "Bucket name"
         default: ""
         required: true
     path:
         description: "Path to upload folder"
         default: ""
         required: true
+    clear:
+        description: "Clear bucket before deploy"
+        default: true
+        required: false
 runs:
     using: "node12"
     main: "dist/index.js"
