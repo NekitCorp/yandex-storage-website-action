@@ -2,11 +2,11 @@ name: "Yandex object storage static website"
 description: "Deploy static website to Yandex Object Storage"
 author: "Nikita"
 inputs:
-    accessKeyId:
+    access-key-id:
         description: "Service account access key id"
         default: ""
         required: true
-    secretAccessKey:
+    secret-access-key:
         description: "Service account secret access key"
         default: ""
         required: true
@@ -14,16 +14,20 @@ inputs:
         description: "Bucket name"
         default: ""
         required: true
-    path:
-        description: "Path to upload folder"
+    include:
+        description: "Include patterns for files"
         default: ""
         required: true
+    exclude:
+        description: "Exclude patterns for files"
+        default: ""
+        required: false
     clear:
         description: "Clear bucket before deploy"
-        default: true
+        default: false
         required: false
 runs:
-    using: "node12"
+    using: "node16"
     main: "dist/index.js"
 branding:
     icon: "upload-cloud"

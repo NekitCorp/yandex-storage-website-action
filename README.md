@@ -1,16 +1,17 @@
 # Yandex object storage static website
 
-Deploy [static website to Yandex Object Storage](https://cloud.yandex.ru/docs/storage/operations/hosting/setup)
+Deploy [static website to Yandex Object Storage](https://cloud.yandex.com/en/docs/storage/operations/hosting/setup).
 
 ## Configuration
 
-| Key               | Value                                        | Type      | Required |
-| ----------------- | -------------------------------------------- | --------- | -------- |
-| `accessKeyId`     | Service account access key id                | `string`  | Yes      |
-| `secretAccessKey` | Service account secret access key            | `string`  | Yes      |
-| `bucket`          | Bucket name                                  | `string`  | Yes      |
-| `path`            | Path to upload folder                        | `string`  | Yes      |
-| `clear`           | Clear bucket before deploy (default: `true`) | `boolean` | No       |
+| Key                 | Value                                                                                                                                       | Type                 | Default | Required |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------- | -------- |
+| `access-key-id`     | The ID of the key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key). | `string`             |         | Yes      |
+| `secret-access-key` | The secret key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key).    | `string`             |         | Yes      |
+| `bucket`            | Bucket name.                                                                                                                                | `string`             |         | Yes      |
+| `include`           | Include [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              | `string or string[]` |         | Yes      |
+| `exclude`           | Exclude [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              | `string or string[]` | `[]`    | No       |
+| `clear`             | Clear bucket before deploy.                                                                                                                 | `boolean`            | `false` | No       |
 
 ## Example
 
@@ -27,21 +28,26 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                node-version: [12.x]
+                node-version: [16.x]
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-node@v1
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
             # Build
             - run: npm ci
             - run: npm run build
             # Deploy
-            - uses: nekitcorp/yandex-storage-website-action@v1
+            - uses: nekitcorp/yandex-storage-website-action@v2
               with:
-                  accessKeyId: ${{ secrets.ACCESS_KEY_ID }}
-                  secretAccessKey: ${{ secrets.SECRET_ACCESS_KEY }}
+                  access-key-id: ${{ secrets.ACCESS_KEY_ID }}
+                  secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
                   bucket: ${{ secrets.BUCKET }}
-                  path: "./build"
+                  include: |
+                      **/*
+                  exclude: |
+                      .gitignore
+                      package-lock.json
+                      node_modules/**
                   clear: true
 ```

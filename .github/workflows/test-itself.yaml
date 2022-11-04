@@ -1,15 +1,23 @@
-name: "test itself"
+name: Test itself
+
 on:
     push:
+        branches: [master]
+
 jobs:
     test:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
             - uses: ./
               with:
-                  accessKeyId: ${{ secrets.ACCESS_KEY_ID }}
-                  secretAccessKey: ${{ secrets.SECRET_ACCESS_KEY }}
+                  access-key-id: ${{ secrets.ACCESS_KEY_ID }}
+                  secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
                   bucket: ${{ secrets.BUCKET }}
-                  path: "./src"
-                  clear: false
+                  include: |
+                      **/*
+                  exclude: |
+                      .gitignore
+                      yarn.lock
+                      node_modules/**
+                  clear: true
