@@ -1,17 +1,17 @@
-# Yandex object storage static website
+# Yandex Object Storage static website hosting GitHub action
 
-Deploy [static website to Yandex Object Storage](https://cloud.yandex.com/en/docs/storage/operations/hosting/setup).
+[Hosting setup](https://cloud.yandex.com/en/docs/storage/operations/hosting/setup)
 
 ## Configuration
 
-| Key                 | Value                                                                                                                                       | Type                 | Default | Required |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------- | -------- |
-| `access-key-id`     | The ID of the key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key). | `string`             |         | Yes      |
-| `secret-access-key` | The secret key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key).    | `string`             |         | Yes      |
-| `bucket`            | Bucket name.                                                                                                                                | `string`             |         | Yes      |
-| `include`           | Include [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              | `string or string[]` |         | Yes      |
-| `exclude`           | Exclude [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              | `string or string[]` | `[]`    | No       |
-| `clear`             | Clear bucket before deploy.                                                                                                                 | `boolean`            | `false` | No       |
+| Key                 | Value                                                                                                                                       | Default | Required |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| `access-key-id`     | The ID of the key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key). |         | Yes      |
+| `secret-access-key` | The secret key that you received when [generating the static key](https://cloud.yandex.com/en/docs/iam/operations/sa/create-access-key).    |         | Yes      |
+| `bucket`            | Bucket name.                                                                                                                                |         | Yes      |
+| `include`           | Include [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              |         | Yes      |
+| `exclude`           | Exclude [patterns](https://github.com/isaacs/node-glob#glob-primer) for files.                                                              | `[]`    | No       |
+| `clear`             | Clear bucket before deploy.                                                                                                                 | `false` | No       |
 
 ## Example
 
