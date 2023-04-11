@@ -26,7 +26,8 @@ s3Uploader
     .upload({
         bucket: process.env.BUCKET,
         clear: true,
+        workingDirectory: "node_modules/@actions/core/lib",
         include: ["**/*"],
-        exclude: [".gitignore", "yarn.lock", "node_modules/**"],
+        exclude: ["command.js.map", "**/*.d.ts"],
     })
     .catch((err) => console.error(err));

@@ -1,9 +1,10 @@
+import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import async from "async";
-import AWS from "aws-sdk";
 import fs from "fs";
-import glob from "glob";
+import { globSync } from "glob";
 import mime from "mime-types";
-import minimatch from "minimatch";
+import { minimatch } from "minimatch";
+import path from "path";
 
 type S3UploaderOptions = {
     accessKeyId: string;
@@ -16,6 +17,7 @@ type UploadOptions = {
     clear: boolean;
     exclude: string[];
     include: string[];
+    workingDirectory: string;
 };
 
 function nonNullable<T>(value: T): value is NonNullable<T> {
@@ -23,23 +25,21 @@ function nonNullable<T>(value: T): value is NonNullable<T> {
 }
 
 export class S3Uploader {
-    private readonly s3: AWS.S3;
+    private readonly client: S3Client;
 
-    constructor(
-        { accessKeyId, endpoint, secretAccessKey }: S3UploaderOptions,
-        private log: (message: string) => void
-    ) {
-        this.s3 = new AWS.S3({ endpoint, accessKeyId, secretAccessKey });
+    constructor({ accessKeyId, endpoint, secretAccessKey }: S3UploaderOptions, private log: (message: string) => void) {
+        this.client = new S3Client({ endpoint, region: "ru-central1", credentials: { accessKeyId, secretAccessKey } });
     }
 
     public async upload(options: UploadOptions): Promise<unknown> {
-        const { bucket, clear, exclude, include } = options;
+        const { bucket, clear, exclude, include, workingDirectory } = options;
 
         this.log(`Include patterns: ${include.join(", ")}.`);
         this.log(`Exclude patterns: ${exclude.join(", ")}.`);
+        if (workingDirectory) this.log(`Working directory: ${workingDirectory}.`);
 
         if (clear) {
-            await this.emptyBucket(bucket);
+            await this.clearBucket(bucket);
             this.log("Bucket was cleaned successfully.");
         }
 
@@ -52,19 +52,20 @@ export class S3Uploader {
                 files,
                 10,
                 async.asyncify(async (file: string) => {
-                    const contentType =
-                        mime.lookup(file) || "application/octet-stream";
+                    const contentType = mime.lookup(file) || "application/octet-stream";
+                    // Remove working-directory
+                    const key = path.relative(workingDirectory, file);
 
-                    this.log(`Uploading: ${file} (${contentType})...`);
+                    this.log(`Uploading: ${key} (${contentType})...`);
 
-                    await this.s3
-                        .upload({
-                            Key: file,
-                            Bucket: bucket,
-                            Body: fs.readFileSync(file),
-                            ContentType: contentType,
-                        })
-                        .promise();
+                    const command = new PutObjectCommand({
+                        Bucket: bucket,
+                        Key: key,
+                        Body: fs.readFileSync(file),
+                        ContentType: contentType,
+                    });
+
+                    await this.client.send(command);
                 }),
                 (err) => {
                     if (err) {
@@ -77,42 +78,46 @@ export class S3Uploader {
         });
     }
 
-    private async emptyBucket(bucket: string): Promise<void> {
-        const listedObjects = await this.s3
-            .listObjects({ Bucket: bucket })
-            .promise();
+    private async clearBucket(bucket: string): Promise<void> {
+        const listCommand = new ListObjectsV2Command({
+            Bucket: bucket,
+            // The default and maximum number of keys returned is 1000.
+            MaxKeys: 1000,
+        });
 
-        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
-            return;
-        }
+        let isTruncated = true;
 
-        const deleteKeys = listedObjects.Contents.map((c) => ({
-            Key: c.Key as string,
-        }));
+        while (isTruncated) {
+            const { Contents, IsTruncated, NextContinuationToken } = await this.client.send(listCommand);
 
-        await this.s3
-            .deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } })
-            .promise();
+            if (!Contents || Contents.length === 0) {
+                return;
+            }
 
-        if (listedObjects.IsTruncated) {
-            await this.emptyBucket(bucket);
+            isTruncated = Boolean(IsTruncated);
+            listCommand.input.ContinuationToken = NextContinuationToken;
+
+            const deleteCommand = new DeleteObjectsCommand({
+                Bucket: bucket,
+                Delete: {
+                    Objects: Contents.map((c) => ({ Key: c.Key })),
+                },
+            });
+
+            const { Deleted } = await this.client.send(deleteCommand);
+
+            this.log(`Successfully deleted ${Deleted?.length} objects from S3 bucket.`);
         }
     }
 
     private getFiles(options: UploadOptions): string[] {
-        const { exclude, include } = options;
+        const include = options.include.map((pattern) => path.join(options.workingDirectory, pattern));
+        const exclude = options.exclude.map((pattern) => path.join(options.workingDirectory, pattern));
 
         return include
             .map((pattern) =>
-                glob
-                    .sync(pattern, { nodir: true })
-                    .map((file) =>
-                        exclude.some((excludePattern) =>
-                            minimatch(file, excludePattern)
-                        )
-                            ? null
-                            : file
-                    )
+                globSync(pattern, { nodir: true })
+                    .map((file) => (exclude.some((excludePattern) => minimatch(file, excludePattern)) ? null : file))
                     .filter(nonNullable)
             )
             .flat(1);

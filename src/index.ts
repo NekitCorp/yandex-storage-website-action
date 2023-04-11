@@ -5,18 +5,19 @@ type Inputs = {
     accessKeyId: string;
     secretAccessKey: string;
     bucket: string;
+    workingDirectory: string;
     include: string[];
     exclude: string[];
     clear: boolean;
 };
 
-const getBooleanFromString = (str: string): boolean =>
-    str === "true" ? true : false;
+const getBooleanFromString = (str: string): boolean => (str === "true" ? true : false);
 
 const inputs: Inputs = {
     accessKeyId: core.getInput("access-key-id", { required: true }),
     secretAccessKey: core.getInput("secret-access-key", { required: true }),
     bucket: core.getInput("bucket", { required: true }),
+    workingDirectory: core.getInput("working-directory", { required: false }),
     include: core.getMultilineInput("include", { required: true }),
     exclude: core.getMultilineInput("exclude", { required: false }) || [],
     clear: getBooleanFromString(core.getInput("clear", { required: false })),
@@ -35,6 +36,7 @@ s3Uploader
     .upload({
         bucket: inputs.bucket,
         clear: inputs.clear,
+        workingDirectory: inputs.workingDirectory,
         exclude: inputs.exclude,
         include: inputs.include,
     })
