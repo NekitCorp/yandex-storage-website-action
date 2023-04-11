@@ -47871,7 +47871,6 @@ class S3Uploader {
             this.log(`Successfully deleted ${count} objects from S3 bucket.`);
         }
         const files = this.filesManager.getFiles({ exclude, include, workingDirectory });
-        console.log(files);
         this.log(`Found ${files.length} files to upload.`);
         return new Promise((resolve, reject) => {
             async_1.default.eachOfLimit(files, 10, async_1.default.asyncify(async (file) => {
