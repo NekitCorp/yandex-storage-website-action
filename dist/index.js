@@ -47822,10 +47822,9 @@ function nonNullable(value) {
     return value !== null && value !== undefined;
 }
 class FilesManager {
-    join(path1, path2) {
-        return path_1.default.join(path1, path2);
-    }
-    glob({ exclude, include }) {
+    getFiles(options) {
+        const include = options.include.map((pattern) => path_1.default.join(options.workingDirectory, pattern));
+        const exclude = options.exclude.map((pattern) => path_1.default.join(options.workingDirectory, pattern));
         return include
             .map((pattern) => (0, glob_1.globSync)(pattern, { nodir: true })
             .map((file) => (exclude.some((excludePattern) => (0, minimatch_1.minimatch)(file, excludePattern)) ? null : file))
@@ -47871,9 +47870,8 @@ class S3Uploader {
             const count = await this.s3client.clearBucket();
             this.log(`Successfully deleted ${count} objects from S3 bucket.`);
         }
-        const includeWD = include.map((pattern) => this.filesManager.join(workingDirectory, pattern));
-        const excludeWD = exclude.map((pattern) => this.filesManager.join(workingDirectory, pattern));
-        const files = this.filesManager.glob({ exclude: excludeWD, include: includeWD });
+        const files = this.filesManager.getFiles({ exclude, include, workingDirectory });
+        console.log(files);
         this.log(`Found ${files.length} files to upload.`);
         return new Promise((resolve, reject) => {
             async_1.default.eachOfLimit(files, 10, async_1.default.asyncify(async (file) => {

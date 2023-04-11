@@ -1,6 +1,6 @@
 {
     "name": "yandex-serverless-action",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Github action for deploy static website to Yandex Object Storage",
     "main": "dist/index.js",
     "scripts": {
