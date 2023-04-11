@@ -11,15 +11,17 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                node-version: [16.x, 18.x]
-        name: Node ${{ matrix.node }}
+                node-version: [16, 18]
+        name: Node ${{ matrix.node }} sample
         steps:
             - uses: actions/checkout@v3
-            - name: Use Node.js
+            - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node }}
             # Install dependencies
+            - run: node -v
+            - run: yarn -v
             - run: yarn
             # Test
             - run: yarn test
