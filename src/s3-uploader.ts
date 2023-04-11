@@ -27,8 +27,6 @@ export class S3Uploader {
 
         const files = this.filesManager.getFiles({ exclude, include, workingDirectory });
 
-        console.log(files);
-
         this.log(`Found ${files.length} files to upload.`);
 
         return new Promise((resolve, reject) => {
