@@ -1,15 +1,7 @@
 import * as core from "@actions/core";
-import { S3Uploader } from "./s3-uploader";
-
-type Inputs = {
-    accessKeyId: string;
-    secretAccessKey: string;
-    bucket: string;
-    workingDirectory: string;
-    include: string[];
-    exclude: string[];
-    clear: boolean;
-};
+import { AWSS3Client } from "./src/aws-s3-client";
+import { S3Uploader } from "./src/s3-uploader";
+import { FilesManager } from "./src/files-manager";
 
 const getBooleanFromString = (str: string): boolean => (str === "true" ? true : false);
 
@@ -24,17 +16,18 @@ const inputs: Inputs = {
 };
 
 const s3Uploader = new S3Uploader(
-    {
+    new AWSS3Client({
         accessKeyId: inputs.accessKeyId,
         endpoint: "https://storage.yandexcloud.net",
         secretAccessKey: inputs.secretAccessKey,
-    },
+        bucket: inputs.bucket,
+    }),
+    new FilesManager(),
     core.info
 );
 
 s3Uploader
     .upload({
-        bucket: inputs.bucket,
         clear: inputs.clear,
         workingDirectory: inputs.workingDirectory,
         exclude: inputs.exclude,

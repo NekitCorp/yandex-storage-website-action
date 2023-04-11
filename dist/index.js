@@ -1726,6 +1726,10 @@ function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
+    const reqHost = reqUrl.hostname;
+    if (isLoopbackAddress(reqHost)) {
+        return true;
+    }
     const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
@@ -1751,13 +1755,24 @@ function checkBypass(reqUrl) {
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
-        if (upperReqHosts.some(x => x === upperNoProxyItem)) {
+        if (upperNoProxyItem === '*' ||
+            upperReqHosts.some(x => x === upperNoProxyItem ||
+                x.endsWith(`.${upperNoProxyItem}`) ||
+                (upperNoProxyItem.startsWith('.') &&
+                    x.endsWith(`${upperNoProxyItem}`)))) {
             return true;
         }
     }
     return false;
 }
 exports.checkBypass = checkBypass;
+function isLoopbackAddress(host) {
+    const hostLower = host.toLowerCase();
+    return (hostLower === 'localhost' ||
+        hostLower.startsWith('127.') ||
+        hostLower.startsWith('[::1]') ||
+        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
 //# sourceMappingURL=proxy.js.map
 
 /***/ }),
@@ -47673,7 +47688,7 @@ exports["default"] = _default;
 
 /***/ }),
 
-/***/ 6144:
+/***/ 14177:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -47703,7 +47718,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(42186));
+const aws_s3_client_1 = __nccwpck_require__(75807);
 const s3_uploader_1 = __nccwpck_require__(42134);
+const files_manager_1 = __nccwpck_require__(21069);
 const getBooleanFromString = (str) => (str === "true" ? true : false);
 const inputs = {
     accessKeyId: core.getInput("access-key-id", { required: true }),
@@ -47714,14 +47731,14 @@ const inputs = {
     exclude: core.getMultilineInput("exclude", { required: false }) || [],
     clear: getBooleanFromString(core.getInput("clear", { required: false })),
 };
-const s3Uploader = new s3_uploader_1.S3Uploader({
+const s3Uploader = new s3_uploader_1.S3Uploader(new aws_s3_client_1.AWSS3Client({
     accessKeyId: inputs.accessKeyId,
     endpoint: "https://storage.yandexcloud.net",
     secretAccessKey: inputs.secretAccessKey,
-}, core.info);
+    bucket: inputs.bucket,
+}), new files_manager_1.FilesManager(), core.info);
 s3Uploader
     .upload({
-    bucket: inputs.bucket,
     clear: inputs.clear,
     workingDirectory: inputs.workingDirectory,
     exclude: inputs.exclude,
@@ -47732,109 +47749,146 @@ s3Uploader
 
 /***/ }),
 
-/***/ 42134:
+/***/ 75807:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AWSS3Client = void 0;
+const client_s3_1 = __nccwpck_require__(19250);
+class AWSS3Client {
+    client;
+    bucket;
+    constructor({ accessKeyId, endpoint, secretAccessKey, bucket }) {
+        this.client = new client_s3_1.S3Client({ endpoint, region: "ru-central1", credentials: { accessKeyId, secretAccessKey } });
+        this.bucket = bucket;
+    }
+    async putObjects(key, body, contentType) {
+        const command = new client_s3_1.PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: body,
+            ContentType: contentType,
+        });
+        await this.client.send(command);
+    }
+    async clearBucket() {
+        const listCommand = new client_s3_1.ListObjectsV2Command({
+            Bucket: this.bucket,
+            // The default and maximum number of keys returned is 1000.
+            MaxKeys: 1000,
+        });
+        let isTruncated = true;
+        let totalDeleted = 0;
+        while (isTruncated) {
+            const { Contents, IsTruncated, NextContinuationToken } = await this.client.send(listCommand);
+            if (!Contents || Contents.length === 0) {
+                break;
+            }
+            isTruncated = Boolean(IsTruncated);
+            listCommand.input.ContinuationToken = NextContinuationToken;
+            const deleteCommand = new client_s3_1.DeleteObjectsCommand({
+                Bucket: this.bucket,
+                Delete: {
+                    Objects: Contents.map((c) => ({ Key: c.Key })),
+                },
+            });
+            const { Deleted } = await this.client.send(deleteCommand);
+            totalDeleted += Deleted?.length ?? 0;
+        }
+        return totalDeleted;
+    }
+}
+exports.AWSS3Client = AWSS3Client;
+
+
+/***/ }),
+
+/***/ 21069:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.S3Uploader = void 0;
-const client_s3_1 = __nccwpck_require__(19250);
-const async_1 = __importDefault(__nccwpck_require__(57888));
-const fs_1 = __importDefault(__nccwpck_require__(57147));
+exports.FilesManager = void 0;
 const glob_1 = __nccwpck_require__(99354);
-const mime_types_1 = __importDefault(__nccwpck_require__(43583));
 const minimatch_1 = __nccwpck_require__(61953);
 const path_1 = __importDefault(__nccwpck_require__(71017));
 function nonNullable(value) {
     return value !== null && value !== undefined;
 }
-class S3Uploader {
-    constructor({ accessKeyId, endpoint, secretAccessKey }, log) {
-        this.log = log;
-        this.client = new client_s3_1.S3Client({ endpoint, region: "ru-central1", credentials: { accessKeyId, secretAccessKey } });
+class FilesManager {
+    join(path1, path2) {
+        return path_1.default.join(path1, path2);
     }
-    upload(options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { bucket, clear, exclude, include, workingDirectory } = options;
-            this.log(`Include patterns: ${include.join(", ")}.`);
-            this.log(`Exclude patterns: ${exclude.join(", ")}.`);
-            if (workingDirectory)
-                this.log(`Working directory: ${workingDirectory}.`);
-            if (clear) {
-                yield this.clearBucket(bucket);
-                this.log("Bucket was cleaned successfully.");
-            }
-            const files = this.getFiles(options);
-            this.log(`Found ${files.length} files to upload.`);
-            return new Promise((resolve, reject) => {
-                async_1.default.eachOfLimit(files, 10, async_1.default.asyncify((file) => __awaiter(this, void 0, void 0, function* () {
-                    const contentType = mime_types_1.default.lookup(file) || "application/octet-stream";
-                    // Remove working-directory
-                    const key = path_1.default.relative(workingDirectory, file);
-                    this.log(`Uploading: ${key} (${contentType})...`);
-                    const command = new client_s3_1.PutObjectCommand({
-                        Bucket: bucket,
-                        Key: key,
-                        Body: fs_1.default.readFileSync(file),
-                        ContentType: contentType,
-                    });
-                    yield this.client.send(command);
-                })), (err) => {
-                    if (err) {
-                        return reject(new Error(err.message));
-                    }
-                    resolve(null);
-                });
-            });
-        });
-    }
-    clearBucket(bucket) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const listCommand = new client_s3_1.ListObjectsV2Command({
-                Bucket: bucket,
-                // The default and maximum number of keys returned is 1000.
-                MaxKeys: 1000,
-            });
-            let isTruncated = true;
-            while (isTruncated) {
-                const { Contents, IsTruncated, NextContinuationToken } = yield this.client.send(listCommand);
-                if (!Contents || Contents.length === 0) {
-                    return;
-                }
-                isTruncated = Boolean(IsTruncated);
-                listCommand.input.ContinuationToken = NextContinuationToken;
-                const deleteCommand = new client_s3_1.DeleteObjectsCommand({
-                    Bucket: bucket,
-                    Delete: {
-                        Objects: Contents.map((c) => ({ Key: c.Key })),
-                    },
-                });
-                const { Deleted } = yield this.client.send(deleteCommand);
-                this.log(`Successfully deleted ${Deleted === null || Deleted === void 0 ? void 0 : Deleted.length} objects from S3 bucket.`);
-            }
-        });
-    }
-    getFiles(options) {
-        const include = options.include.map((pattern) => path_1.default.join(options.workingDirectory, pattern));
-        const exclude = options.exclude.map((pattern) => path_1.default.join(options.workingDirectory, pattern));
+    glob({ exclude, include }) {
         return include
             .map((pattern) => (0, glob_1.globSync)(pattern, { nodir: true })
             .map((file) => (exclude.some((excludePattern) => (0, minimatch_1.minimatch)(file, excludePattern)) ? null : file))
             .filter(nonNullable))
             .flat(1);
+    }
+}
+exports.FilesManager = FilesManager;
+
+
+/***/ }),
+
+/***/ 42134:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.S3Uploader = void 0;
+const async_1 = __importDefault(__nccwpck_require__(57888));
+const fs_1 = __importDefault(__nccwpck_require__(57147));
+const mime_types_1 = __importDefault(__nccwpck_require__(43583));
+const path_1 = __importDefault(__nccwpck_require__(71017));
+class S3Uploader {
+    s3client;
+    filesManager;
+    log;
+    constructor(s3client, filesManager, log) {
+        this.s3client = s3client;
+        this.filesManager = filesManager;
+        this.log = log;
+    }
+    async upload(options) {
+        const { clear, exclude, include, workingDirectory } = options;
+        this.log(`Include patterns: ${include.join(", ")}.`);
+        this.log(`Exclude patterns: ${exclude.join(", ")}.`);
+        if (workingDirectory)
+            this.log(`Working directory: ${workingDirectory}.`);
+        if (clear) {
+            const count = await this.s3client.clearBucket();
+            this.log(`Successfully deleted ${count} objects from S3 bucket.`);
+        }
+        const includeWD = include.map((pattern) => this.filesManager.join(workingDirectory, pattern));
+        const excludeWD = exclude.map((pattern) => this.filesManager.join(workingDirectory, pattern));
+        const files = this.filesManager.glob({ exclude: excludeWD, include: includeWD });
+        this.log(`Found ${files.length} files to upload.`);
+        return new Promise((resolve, reject) => {
+            async_1.default.eachOfLimit(files, 10, async_1.default.asyncify(async (file) => {
+                const contentType = mime_types_1.default.lookup(file) || "application/octet-stream";
+                // Remove working-directory
+                const key = path_1.default.relative(workingDirectory, file);
+                this.log(`Uploading: ${key} (${contentType})...`);
+                await this.s3client.putObjects(key, fs_1.default.readFileSync(file), contentType);
+            }), (err) => {
+                if (err) {
+                    return reject(new Error(err.message));
+                }
+                resolve(null);
+            });
+        });
     }
 }
 exports.S3Uploader = S3Uploader;
@@ -54538,7 +54592,7 @@ module.exports = JSON.parse('{"application/1d-interleaved-parityfec":{"source":"
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(6144);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(14177);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()
