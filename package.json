@@ -1,30 +1,33 @@
 {
     "name": "yandex-serverless-action",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Github action for deploy static website to Yandex Object Storage",
     "main": "dist/index.js",
     "scripts": {
-        "build": "ncc build src/index.ts -o dist",
-        "dev": "tsc && node build/dev.js"
+        "build": "ncc build index.ts -o dist",
+        "dev": "ts-node --files dev.ts",
+        "test": "vitest"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
         "@actions/core": "1.10.0",
+        "@aws-sdk/client-s3": "3.310.0",
         "async": "3.2.4",
-        "aws-sdk": "2.1246.0",
-        "glob": "8.0.3",
+        "glob": "10.0.0",
         "mime-types": "2.1.35",
-        "minimatch": "5.1.0"
+        "minimatch": "9.0.0"
     },
     "devDependencies": {
-        "@types/async": "3.2.15",
-        "@types/glob": "^8.0.0",
+        "@types/async": "3.2.18",
+        "@types/glob": "8.1.0",
         "@types/mime-types": "2.1.1",
-        "@types/node": "18.11.9",
-        "@vercel/ncc": "0.34.0",
+        "@types/node": "18.15.11",
+        "@vercel/ncc": "0.36.1",
         "dotenv": "16.0.3",
-        "typescript": "4.8.4"
+        "ts-node": "10.9.1",
+        "typescript": "5.0.4",
+        "vitest": "0.30.1"
     }
 }

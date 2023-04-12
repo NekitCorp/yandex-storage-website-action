@@ -1,49 +1,31 @@
 import async from "async";
-import AWS from "aws-sdk";
 import fs from "fs";
-import glob from "glob";
 import mime from "mime-types";
-import minimatch from "minimatch";
-
-type S3UploaderOptions = {
-    accessKeyId: string;
-    endpoint: string;
-    secretAccessKey: string;
-};
+import path from "path";
 
 type UploadOptions = {
-    bucket: string;
     clear: boolean;
     exclude: string[];
     include: string[];
+    workingDirectory: string;
 };
 
-function nonNullable<T>(value: T): value is NonNullable<T> {
-    return value !== null && value !== undefined;
-}
-
 export class S3Uploader {
-    private readonly s3: AWS.S3;
-
-    constructor(
-        { accessKeyId, endpoint, secretAccessKey }: S3UploaderOptions,
-        private log: (message: string) => void
-    ) {
-        this.s3 = new AWS.S3({ endpoint, accessKeyId, secretAccessKey });
-    }
+    constructor(private s3client: IS3Client, private filesManager: IFilesManager, private log: ILogger) {}
 
     public async upload(options: UploadOptions): Promise<unknown> {
-        const { bucket, clear, exclude, include } = options;
+        const { clear, exclude, include, workingDirectory } = options;
 
         this.log(`Include patterns: ${include.join(", ")}.`);
         this.log(`Exclude patterns: ${exclude.join(", ")}.`);
+        if (workingDirectory) this.log(`Working directory: ${workingDirectory}.`);
 
         if (clear) {
-            await this.emptyBucket(bucket);
-            this.log("Bucket was cleaned successfully.");
+            const count = await this.s3client.clearBucket();
+            this.log(`Successfully deleted ${count} objects from S3 bucket.`);
         }
 
-        const files = this.getFiles(options);
+        const files = this.filesManager.getFiles({ exclude, include, workingDirectory });
 
         this.log(`Found ${files.length} files to upload.`);
 
@@ -52,19 +34,13 @@ export class S3Uploader {
                 files,
                 10,
                 async.asyncify(async (file: string) => {
-                    const contentType =
-                        mime.lookup(file) || "application/octet-stream";
+                    const contentType = mime.lookup(file) || "application/octet-stream";
+                    // Remove working-directory
+                    const key = path.relative(workingDirectory, file);
 
-                    this.log(`Uploading: ${file} (${contentType})...`);
+                    this.log(`Uploading: ${key} (${contentType})...`);
 
-                    await this.s3
-                        .upload({
-                            Key: file,
-                            Bucket: bucket,
-                            Body: fs.readFileSync(file),
-                            ContentType: contentType,
-                        })
-                        .promise();
+                    await this.s3client.putObjects(key, fs.readFileSync(file), contentType);
                 }),
                 (err) => {
                     if (err) {
@@ -75,46 +51,5 @@ export class S3Uploader {
                 }
             );
         });
-    }
-
-    private async emptyBucket(bucket: string): Promise<void> {
-        const listedObjects = await this.s3
-            .listObjects({ Bucket: bucket })
-            .promise();
-
-        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
-            return;
-        }
-
-        const deleteKeys = listedObjects.Contents.map((c) => ({
-            Key: c.Key as string,
-        }));
-
-        await this.s3
-            .deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } })
-            .promise();
-
-        if (listedObjects.IsTruncated) {
-            await this.emptyBucket(bucket);
-        }
-    }
-
-    private getFiles(options: UploadOptions): string[] {
-        const { exclude, include } = options;
-
-        return include
-            .map((pattern) =>
-                glob
-                    .sync(pattern, { nodir: true })
-                    .map((file) =>
-                        exclude.some((excludePattern) =>
-                            minimatch(file, excludePattern)
-                        )
-                            ? null
-                            : file
-                    )
-                    .filter(nonNullable)
-            )
-            .flat(1);
     }
 }

@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
-import { S3Uploader } from "./s3-uploader";
+import { AWSS3Client } from "./src/aws-s3-client";
+import { FilesManager } from "./src/files-manager";
+import { S3Uploader } from "./src/s3-uploader";
 
 dotenv.config();
 
@@ -14,19 +16,21 @@ if (!process.env.BUCKET) {
 }
 
 const s3Uploader = new S3Uploader(
-    {
+    new AWSS3Client({
         accessKeyId: process.env.ACCESS_KEY_ID,
         endpoint: "https://storage.yandexcloud.net",
         secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    },
+        bucket: process.env.BUCKET,
+    }),
+    new FilesManager(),
     console.log
 );
 
 s3Uploader
     .upload({
-        bucket: process.env.BUCKET,
         clear: true,
+        workingDirectory: "node_modules/@actions/core/lib",
         include: ["**/*"],
-        exclude: [".gitignore", "yarn.lock", "node_modules/**"],
+        exclude: ["command.js.map", "**/*.d.ts"],
     })
     .catch((err) => console.error(err));

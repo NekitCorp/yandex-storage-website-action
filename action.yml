@@ -1,6 +1,6 @@
 name: "Yandex object storage static website"
 description: "Deploy static website to Yandex Object Storage"
-author: "Nikita"
+author: "Nikita Madeev"
 inputs:
     access-key-id:
         description: "Service account access key id"
@@ -17,7 +17,11 @@ inputs:
     include:
         description: "Include patterns for files"
         default: ""
-        required: true
+        required: false
+    working-directory:
+        description: "Specify the working directory of where to run the command"
+        default: ""
+        required: false
     exclude:
         description: "Exclude patterns for files"
         default: ""

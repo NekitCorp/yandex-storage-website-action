@@ -1,23 +1,36 @@
 name: Test itself
 
 on:
+    pull_request:
     push:
-        branches: [master]
+        branches:
+            - master
 
 jobs:
     test:
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node: ["16.x", "18.x"]
+        name: Node ${{ matrix.node }} sample
         steps:
             - uses: actions/checkout@v3
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node }}
+            # Install dependencies
+            - run: yarn
+            # Test
+            - run: yarn test
+            # Deploy
             - uses: ./
               with:
                   access-key-id: ${{ secrets.ACCESS_KEY_ID }}
                   secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
                   bucket: ${{ secrets.BUCKET }}
-                  include: |
-                      **/*
+                  working-directory: node_modules/@actions/core/lib
                   exclude: |
-                      .gitignore
-                      yarn.lock
-                      node_modules/**
+                      command.js.map
+                      **/*.d.ts
                   clear: true
