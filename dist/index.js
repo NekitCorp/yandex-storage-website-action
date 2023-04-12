@@ -47719,19 +47719,19 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(42186));
 const aws_s3_client_1 = __nccwpck_require__(75807);
-const s3_uploader_1 = __nccwpck_require__(42134);
 const files_manager_1 = __nccwpck_require__(21069);
-const getBooleanFromString = (str) => (str === "true" ? true : false);
+const inputs_1 = __nccwpck_require__(7063);
+const s3_uploader_1 = __nccwpck_require__(42134);
 const inputs = {
     // required
-    accessKeyId: core.getInput("access-key-id", { required: true }),
-    secretAccessKey: core.getInput("secret-access-key", { required: true }),
-    bucket: core.getInput("bucket", { required: true }),
+    accessKeyId: (0, inputs_1.getString)({ name: "access-key-id", required: true }),
+    secretAccessKey: (0, inputs_1.getString)({ name: "secret-access-key", required: true }),
+    bucket: (0, inputs_1.getString)({ name: "bucket", required: true }),
     // optional
-    workingDirectory: core.getInput("working-directory", { required: false }),
-    include: core.getMultilineInput("include", { required: false }) || ["**/*"],
-    exclude: core.getMultilineInput("exclude", { required: false }) || [],
-    clear: getBooleanFromString(core.getInput("clear", { required: false })),
+    workingDirectory: (0, inputs_1.getString)({ name: "working-directory", required: false, defaultValue: "" }),
+    include: (0, inputs_1.getMultiline)({ name: "include", required: false, defaultValue: ["**/*"] }),
+    exclude: (0, inputs_1.getMultiline)({ name: "exclude", required: false, defaultValue: [] }),
+    clear: (0, inputs_1.getBoolean)({ name: "clear", required: false, defaultValue: false }),
 };
 const s3Uploader = new s3_uploader_1.S3Uploader(new aws_s3_client_1.AWSS3Client({
     accessKeyId: inputs.accessKeyId,
@@ -47835,6 +47835,82 @@ class FilesManager {
     }
 }
 exports.FilesManager = FilesManager;
+
+
+/***/ }),
+
+/***/ 7063:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getMultiline = exports.getBoolean = exports.getString = void 0;
+const core = __importStar(__nccwpck_require__(42186));
+function getString(options) {
+    const { name, required } = options;
+    if (required) {
+        return core.getInput(name, { required });
+    }
+    else {
+        return core.getInput(name, { required }) || options.defaultValue;
+    }
+}
+exports.getString = getString;
+function getBoolean(options) {
+    const { name, required } = options;
+    if (required) {
+        return core.getBooleanInput(name, { required });
+    }
+    else {
+        try {
+            return core.getBooleanInput(name, { required });
+        }
+        catch (error) {
+            return options.defaultValue;
+        }
+    }
+}
+exports.getBoolean = getBoolean;
+function getMultiline(options) {
+    const { name, required } = options;
+    if (required) {
+        return core.getMultilineInput(name, { required });
+    }
+    else {
+        const value = core.getMultilineInput(name, { required });
+        if (value.length === 0) {
+            return options.defaultValue;
+        }
+        else {
+            return value;
+        }
+    }
+}
+exports.getMultiline = getMultiline;
 
 
 /***/ }),

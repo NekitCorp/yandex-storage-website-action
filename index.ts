@@ -1,20 +1,19 @@
 import * as core from "@actions/core";
 import { AWSS3Client } from "./src/aws-s3-client";
-import { S3Uploader } from "./src/s3-uploader";
 import { FilesManager } from "./src/files-manager";
-
-const getBooleanFromString = (str: string): boolean => (str === "true" ? true : false);
+import { getBoolean, getMultiline, getString } from "./src/inputs";
+import { S3Uploader } from "./src/s3-uploader";
 
 const inputs: Inputs = {
     // required
-    accessKeyId: core.getInput("access-key-id", { required: true }),
-    secretAccessKey: core.getInput("secret-access-key", { required: true }),
-    bucket: core.getInput("bucket", { required: true }),
+    accessKeyId: getString({ name: "access-key-id", required: true }),
+    secretAccessKey: getString({ name: "secret-access-key", required: true }),
+    bucket: getString({ name: "bucket", required: true }),
     // optional
-    workingDirectory: core.getInput("working-directory", { required: false }),
-    include: core.getMultilineInput("include", { required: false }) || ["**/*"],
-    exclude: core.getMultilineInput("exclude", { required: false }) || [],
-    clear: getBooleanFromString(core.getInput("clear", { required: false })),
+    workingDirectory: getString({ name: "working-directory", required: false, defaultValue: "" }),
+    include: getMultiline({ name: "include", required: false, defaultValue: ["**/*"] }),
+    exclude: getMultiline({ name: "exclude", required: false, defaultValue: [] }),
+    clear: getBoolean({ name: "clear", required: false, defaultValue: false }),
 };
 
 const s3Uploader = new S3Uploader(
