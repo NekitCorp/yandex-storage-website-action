@@ -21,10 +21,21 @@ describe("s3-uploader", () => {
     });
 
     describe("upload", () => {
-        it("valid", async () => {
-            await s3Uploader.upload({ clear: true, exclude: ["README.md", "**/*.d.ts"], include: ["**/*"], workingDirectory });
+        it("clear bucket before uploading files", async () => {
+            await s3Uploader.upload({ clear: true, exclude: [], include: [], workingDirectory: "" });
 
             expect(mockS3Client.clearBucket).toBeCalledTimes(1);
+        });
+
+        it("don't clear bucket before uploading files", async () => {
+            await s3Uploader.upload({ clear: false, exclude: [], include: [], workingDirectory: "" });
+
+            expect(mockS3Client.clearBucket).toBeCalledTimes(0);
+        });
+
+        it("general", async () => {
+            await s3Uploader.upload({ clear: false, exclude: ["README.md", "**/*.d.ts"], include: ["**/*"], workingDirectory });
+
             expect(mockS3Client.putObjects).toBeCalledTimes(7);
 
             const calls = mockS3Client.putObjects.mock.calls;

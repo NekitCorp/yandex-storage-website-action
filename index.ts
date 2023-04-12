@@ -6,11 +6,13 @@ import { FilesManager } from "./src/files-manager";
 const getBooleanFromString = (str: string): boolean => (str === "true" ? true : false);
 
 const inputs: Inputs = {
+    // required
     accessKeyId: core.getInput("access-key-id", { required: true }),
     secretAccessKey: core.getInput("secret-access-key", { required: true }),
     bucket: core.getInput("bucket", { required: true }),
+    // optional
     workingDirectory: core.getInput("working-directory", { required: false }),
-    include: core.getMultilineInput("include", { required: true }),
+    include: core.getMultilineInput("include", { required: false }) || ["**/*"],
     exclude: core.getMultilineInput("exclude", { required: false }) || [],
     clear: getBooleanFromString(core.getInput("clear", { required: false })),
 };

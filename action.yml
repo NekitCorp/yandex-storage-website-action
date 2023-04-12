@@ -17,11 +17,11 @@ inputs:
     include:
         description: "Include patterns for files"
         default: ""
-        required: true
+        required: false
     working-directory:
         description: "Specify the working directory of where to run the command"
         default: ""
-        required: true
+        required: false
     exclude:
         description: "Exclude patterns for files"
         default: ""

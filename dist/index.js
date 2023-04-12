@@ -47723,11 +47723,13 @@ const s3_uploader_1 = __nccwpck_require__(42134);
 const files_manager_1 = __nccwpck_require__(21069);
 const getBooleanFromString = (str) => (str === "true" ? true : false);
 const inputs = {
+    // required
     accessKeyId: core.getInput("access-key-id", { required: true }),
     secretAccessKey: core.getInput("secret-access-key", { required: true }),
     bucket: core.getInput("bucket", { required: true }),
+    // optional
     workingDirectory: core.getInput("working-directory", { required: false }),
-    include: core.getMultilineInput("include", { required: true }),
+    include: core.getMultilineInput("include", { required: false }) || ["**/*"],
     exclude: core.getMultilineInput("exclude", { required: false }) || [],
     clear: getBooleanFromString(core.getInput("clear", { required: false })),
 };

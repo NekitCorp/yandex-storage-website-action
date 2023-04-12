@@ -30,8 +30,6 @@ jobs:
                   secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
                   bucket: ${{ secrets.BUCKET }}
                   working-directory: node_modules/@actions/core/lib
-                  include: |
-                      **/*
                   exclude: |
                       command.js.map
                       **/*.d.ts

@@ -98,5 +98,18 @@ describe("files-manager", () => {
                 "src/__tests__/test-build/folder1/folder2/c.css",
             ]);
         });
+
+        it("don't specify workingDirectory, should use cwd project directory", async () => {
+            const files = filesManager.getFiles({
+                exclude: ["node_modules/**/*"],
+                include: ["**/*"],
+                workingDirectory: "",
+            });
+
+            expect(files.includes("package.json")).toBeTruthy();
+            expect(files.includes("yarn.lock")).toBeTruthy();
+            expect(files.includes("README.md")).toBeTruthy();
+            expect(files.includes("vitest.config.ts")).toBeTruthy();
+        });
     });
 });

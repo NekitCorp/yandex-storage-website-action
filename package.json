@@ -28,6 +28,6 @@
         "dotenv": "16.0.3",
         "ts-node": "10.9.1",
         "typescript": "5.0.4",
-        "vitest": "^0.30.1"
+        "vitest": "0.30.1"
     }
 }
